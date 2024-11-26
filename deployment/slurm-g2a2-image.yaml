@@ -1,0 +1,92 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+blueprint_name: g2a2-image
+
+validators:
+- validator: test_deployment_variable_not_used
+  inputs: {}
+  skip: true
+
+# this blueprint should be used with the extra variables defined in
+# deployment-image-cluster.yaml
+vars:
+  deployment_name: g2a2-image
+
+deployment_groups:
+- group: build_script
+  modules:
+  - id: sysnet
+    source: modules/network/pre-existing-vpc
+    settings:
+      network_name: $(vars.network_name_system)
+      subnetwork_name: $(vars.subnetwork_name_system)
+
+  - id: image_build_script
+    source: modules/scripts/startup-script
+    settings:
+      install_ansible: true
+      configure_ssh_host_patterns:
+      - 10.0.0.*
+      - 10.1.0.*
+      - 10.2.0.*
+      - 10.3.0.*
+      - 10.4.0.*
+      - 10.5.0.*
+      - 10.6.0.*
+      - 10.7.0.*
+      - $(vars.slurm_cluster_name)*
+      docker:
+        enabled: true
+        world_writable: true
+      runners:
+      # it is important that kernel upgrades do not occur before running the
+      # solution for building Slurm (which doesn't handle them well on the fly)
+      # if you follow this rule, any module which supports DKMS will be
+      # properly configured at the end of image building (gVNIC, NVIDIA, ...)
+      - type: shell
+        destination: install-fastsocket.sh
+        content: |
+          #!/bin/bash
+          set -e -o pipefail
+
+          echo "deb https://packages.cloud.google.com/apt google-fast-socket main" > /etc/apt/sources.list.d/google-fast-socket.list
+          apt-get update --allow-releaseinfo-change
+          apt-get install --assume-yes google-fast-socket
+
+      - type: shell
+        destination: install-torch.sh
+        content: |
+          #!/bin/bash
+          set -e -o pipefail
+
+          pip install torch torchvision torchaudio
+
+- group: slurm-build
+  modules:
+  - id: slurm-image
+    source: modules/packer/custom-image
+    kind: packer
+    use:
+    - image_build_script
+    - sysnet
+    settings:
+      # building this image does not require a GPU-enabled VM but must *not* be
+      # run on a N-series VM otherwise, the "open" drivers will not install
+      machine_type: c2-standard-16
+      source_image_family: slurm-gcp-6-8-debian-11
+      source_image_project_id: [schedmd-slurm-public]
+      image_family: $(vars.g2a2_final_image_family)
+      disk_size: $(vars.disk_size_gb)
