@@ -1,9 +1,8 @@
-#!/bin/bash
 
 REGION=us-central1
 
 # enable APIs
-gcloud services enable cloudscheduler.googleapis.com compute.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com eventarc.googleapis.com logging.googleapis.com pubsub.googleapis.com cloudfunctions.googleapis.com run.googleapis.com
+gcloud services enable compute.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com eventarc.googleapis.com logging.googleapis.com pubsub.googleapis.com cloudfunctions.googleapis.com run.googleapis.com
 
 # set IAM permission compute engine service account 
 PROJECT_ID=$(gcloud config get-value project)
@@ -22,14 +21,27 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
  --member serviceAccount:$PROJECT_NUMBER-compute@developer.gserviceaccount.com \
  --role roles/compute.instanceAdmin
 
+# create pubsub for scheduling job
+gcloud pubsub topics create stop-instance-event
 
-gcloud functions deploy gce-gke-labeler \
+# deploy cloud function
+gcloud functions deploy gce-gke-stopper \
 --gen2 \
 --runtime=python312 \
 --region=${REGION} \
 --source=. \
---entry-point=label_gce_gke_instance \
+--entry-point=stop_gce_gke_instance \
 --trigger-location=${REGION} \
---trigger-event-filters="type=google.cloud.audit.log.v1.written" \
---trigger-event-filters="serviceName=compute.googleapis.com" \
---trigger-event-filters="methodName=v1.compute.instances.insert" ##todo include gke events
+--trigger-topic=stop-instance-event
+
+# test
+gcloud functions call gce-gke-stopper \
+    --data '{"data":"foo"}'
+
+# create cloud scheduler job
+gcloud scheduler jobs create pubsub stop-gce-gke-instances \
+    --schedule '0 0 * * *' \
+    --topic stop-instance-event \
+    --message-body="daily VM stop checker" \
+    --time-zone="UTC" \
+    --location us-central1

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-# [START functions_label_gce_instance]
+# [START functions_label_gce_gke_instance]
 import json
 from datetime import datetime, timedelta
 
@@ -54,6 +54,11 @@ def label_gce_gke_instance(data,event):
     creator = creator.replace("@", "_")
     creator = creator.replace(".", "_")
     
+    # workaround label value max limit of 63 char
+    if len(creator) > 63:
+        creator = creator.split('iam')[0]
+
+
     # Get the newly-created VM instance's label fingerprint
     # This is required by the Compute Engine API to prevent duplicate labels
     instance = instances_client.get(
@@ -98,4 +103,4 @@ def label_gce_gke_instance(data,event):
     return
 
 
-# [END functions_label_gce_instance]
+# [END functions_label_gce_gke_instance]
