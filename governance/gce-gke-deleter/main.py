@@ -26,7 +26,8 @@ import sys
 import time
 
 
-project_id='gpu-launchpad-playground'
+project_id='tpu-launchpad-playground'
+
 instances_client = compute_v1.InstancesClient()
 request = compute_v1.AggregatedListInstancesRequest(project=project_id)
 gke_client = container_v1.ClusterManagerClient()

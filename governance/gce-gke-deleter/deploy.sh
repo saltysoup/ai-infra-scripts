@@ -2,7 +2,7 @@
 REGION=us-central1
 
 # enable APIs
-gcloud services enable compute.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com eventarc.googleapis.com logging.googleapis.com pubsub.googleapis.com cloudfunctions.googleapis.com run.googleapis.com
+gcloud services enable cloudscheduler.googleapis.com compute.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com eventarc.googleapis.com logging.googleapis.com pubsub.googleapis.com cloudfunctions.googleapis.com run.googleapis.com
 
 # set IAM permission compute engine service account 
 PROJECT_ID=$(gcloud config get-value project)
@@ -30,13 +30,9 @@ gcloud functions deploy gce-gke-deleter \
 --runtime=python312 \
 --region=${REGION} \
 --source=. \
---entry-point=stop_gce_gke_instance \
+--entry-point=delete_gce_gke_instance \
 --trigger-location=${REGION} \
---trigger-topic=stop-instance-event
-
-# test
-gcloud functions call gce-gke-deleter \
-    --data '{"data":"foo"}'
+--trigger-topic=delete-instance-event
 
 # create cloud scheduler job
 gcloud scheduler jobs create pubsub delete-gce-gke-instances \
@@ -45,3 +41,7 @@ gcloud scheduler jobs create pubsub delete-gce-gke-instances \
     --message-body="daily VM delete checker" \
     --time-zone="UTC" \
     --location us-central1
+
+# test
+gcloud functions call gce-gke-deleter \
+    --data '{"data":"foo"}'

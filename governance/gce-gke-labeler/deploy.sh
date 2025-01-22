@@ -32,4 +32,4 @@ gcloud functions deploy gce-gke-labeler \
 --trigger-location=${REGION} \
 --trigger-event-filters="type=google.cloud.audit.log.v1.written" \
 --trigger-event-filters="serviceName=compute.googleapis.com" \
---trigger-event-filters="methodName=v1.compute.instances.insert" ##todo include gke events
+--trigger-event-filters="methodName=v1.compute.instances.insert"

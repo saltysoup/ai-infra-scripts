@@ -2,7 +2,7 @@
 REGION=us-central1
 
 # enable APIs
-gcloud services enable compute.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com eventarc.googleapis.com logging.googleapis.com pubsub.googleapis.com cloudfunctions.googleapis.com run.googleapis.com
+gcloud services enable cloudscheduler.googleapis.com compute.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com eventarc.googleapis.com logging.googleapis.com pubsub.googleapis.com cloudfunctions.googleapis.com run.googleapis.com
 
 # set IAM permission compute engine service account 
 PROJECT_ID=$(gcloud config get-value project)
@@ -34,10 +34,6 @@ gcloud functions deploy gce-gke-stopper \
 --trigger-location=${REGION} \
 --trigger-topic=stop-instance-event
 
-# test
-gcloud functions call gce-gke-stopper \
-    --data '{"data":"foo"}'
-
 # create cloud scheduler job
 gcloud scheduler jobs create pubsub stop-gce-gke-instances \
     --schedule '0 0 * * *' \
@@ -45,3 +41,7 @@ gcloud scheduler jobs create pubsub stop-gce-gke-instances \
     --message-body="daily VM stop checker" \
     --time-zone="UTC" \
     --location us-central1
+
+# test
+gcloud functions call gce-gke-stopper \
+    --data '{"data":"foo"}'
