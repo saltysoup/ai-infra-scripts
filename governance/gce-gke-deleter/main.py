@@ -32,13 +32,7 @@ instances_client = compute_v1.InstancesClient()
 request = compute_v1.AggregatedListInstancesRequest(project=project_id)
 gke_client = container_v1.ClusterManagerClient()
 
-# CloudEvent function that labels newly-created GCE instances
-# with the entity (user or service account) that created them.
-#
-# @param {object} cloudevent A CloudEvent containing the Cloud Audit Log entry.
-# @param {object} cloudevent.data.protoPayload The Cloud Audit Log entry.
-
-def list_instances(project_id):
+def list_instances(project_id: str) -> dict:
     results = {}
     count = 0
     for zone, instances_in_zone in instances_client.aggregated_list(request=request):
@@ -47,18 +41,6 @@ def list_instances(project_id):
             results[key_name] = {"instance": instance.name, "zone": zone.split('zones/')[1]}
             count += 1
     return results
-
-def get_delete_by_labels(project_id,instance_name,zone):
-    # Get the newly-created VM instance's label fingerprint
-    # This is required by the Compute Engine API to prevent duplicate labels
-    instance = instances_client.get(
-        project=project_id, instance=instance_name, zone=zone 
-    )
-    time_now = datetime.now().strftime("%Y%m%d")
-
-    if 'delete-by' in instance.labels:
-        if instance.labels['delete-by'] == time_now:
-            print (f"Deleting instance {instance_name} in zone {zone} with delete time being {time_now}")
             
 def wait_for_extended_operation(
     operation: ExtendedOperation, verbose_name: str = "operation", timeout: int = 300
@@ -140,7 +122,7 @@ def delete_instance(project_id: str, instance_name: str, zone: str) -> None:
     else:
         print (f"Skipping instance {instance_name} as it has no delete date label")
 
-def delete_cluster(name):
+def delete_cluster(name: str) -> None:
     """Deletes a  GKE cluster.
 
     Args:
@@ -182,7 +164,7 @@ def delete_cluster(name):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def delete_gce_gke_instance(data,event):
+def delete_gce_gke_instance(data: dict,event: dict) -> None:
     print (f"running delete instance function with event: {event} and data: {data}")
     results = list_instances(project_id)
     for instance in results:

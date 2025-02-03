@@ -28,14 +28,14 @@ instances_client = compute_v1.InstancesClient()
 #
 # @param {object} cloudevent A CloudEvent containing the Cloud Audit Log entry.
 # @param {object} cloudevent.data.protoPayload The Cloud Audit Log entry.
-def label_gce_gke_instance(data,event):
+def label_gce_gke_instance(data: dict,event: dict) -> None:
     # Decode bytes to string
     cloudevent_str = data.decode('utf-8')
     # Parse JSON string to dictionary
     cloudevent = json.loads(cloudevent_str)
 
     '''
-    {'@type': 'type.googleapis.com/google.events.cloud.audit.v1.LogEntryData', 'protoPayload': {'authenticationInfo': {'principalEmail': 'ikwak@google.com', 'principalSubject': 'user:ikwak@google.com'}, 'requestMetadata': {'callerIp': '163.53.146.16', 'callerSuppliedUserAgent': 'google-cloud-sdk gcloud/444.0.0 command/gcloud.compute.instances.create invocation-id/71cb8723d49f4ef8b82260134ad74f81 environment/None environment-version/None client-os/LINUX client-os-ver/6.6.50 client-pltf-arch/x86_64 interactive/True from-script/False python/3.9.16 term/xterm-256color (Linux 6.6.50-05090-g02ec56928355),gzip(gfe)', 'requestAttributes': {}, 'destinationAttributes': {}}, 'serviceName': 'compute.googleapis.com', 'methodName': 'v1.compute.instances.insert', 'resourceName': 'projects/gpu-launchpad-playground/zones/us-central1-a/instances/test1', 'serviceData': {}, 'request': {'@type': 'type.googleapis.com/compute.instances.insert'}}, 'insertId': 'paohsne1bsvs', 'resource': {'type': 'gce_instance', 'labels': {'instance_id': '1767399794411435844', 'project_id': 'gpu-launchpad-playground', 'zone': 'us-central1-a'}}, 'timestamp': '2024-12-04T12:23:12.407742Z', 'severity': 'NOTICE', 'labels': {'compute.googleapis.com/root_trigger_id': '53647822-96b6-41d9-9d9e-26c4602659ab'}, 'logName': 'projects/gpu-launchpad-playground/logs/cloudaudit.googleapis.com%2Factivity', 'operation': {'id': 'operation-1733314986767-62870d811f398-95d85d80-5fc19abc', 'producer': 'compute.googleapis.com', 'last': True}, 'receiveTimestamp': '2024-12-04T12:23:13.088396054Z'}
+    example cloudevent = {'@type': 'type.googleapis.com/google.events.cloud.audit.v1.LogEntryData', 'protoPayload': {'authenticationInfo': {'principalEmail': 'ikwak@google.com', 'principalSubject': 'user:ikwak@google.com'}, 'requestMetadata': {'callerIp': '163.53.146.16', 'callerSuppliedUserAgent': 'google-cloud-sdk gcloud/444.0.0 command/gcloud.compute.instances.create invocation-id/71cb8723d49f4ef8b82260134ad74f81 environment/None environment-version/None client-os/LINUX client-os-ver/6.6.50 client-pltf-arch/x86_64 interactive/True from-script/False python/3.9.16 term/xterm-256color (Linux 6.6.50-05090-g02ec56928355),gzip(gfe)', 'requestAttributes': {}, 'destinationAttributes': {}}, 'serviceName': 'compute.googleapis.com', 'methodName': 'v1.compute.instances.insert', 'resourceName': 'projects/gpu-launchpad-playground/zones/us-central1-a/instances/test1', 'serviceData': {}, 'request': {'@type': 'type.googleapis.com/compute.instances.insert'}}, 'insertId': 'paohsne1bsvs', 'resource': {'type': 'gce_instance', 'labels': {'instance_id': '1767399794411435844', 'project_id': 'gpu-launchpad-playground', 'zone': 'us-central1-a'}}, 'timestamp': '2024-12-04T12:23:12.407742Z', 'severity': 'NOTICE', 'labels': {'compute.googleapis.com/root_trigger_id': '53647822-96b6-41d9-9d9e-26c4602659ab'}, 'logName': 'projects/gpu-launchpad-playground/logs/cloudaudit.googleapis.com%2Factivity', 'operation': {'id': 'operation-1733314986767-62870d811f398-95d85d80-5fc19abc', 'producer': 'compute.googleapis.com', 'last': True}, 'receiveTimestamp': '2024-12-04T12:23:13.088396054Z'}
     '''
     print("running label_gce_gke_instance with event: {}".format(cloudevent))
     # Extract parameters from the CloudEvent + Cloud Audit Log data
@@ -99,7 +99,6 @@ def label_gce_gke_instance(data,event):
         # Uncomment the line below to retry failed invocations.
         # (You'll also have to enable retries in Cloud Functions itself.)
         raise e
-
     return
 
 
